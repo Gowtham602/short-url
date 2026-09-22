@@ -45,21 +45,27 @@ class ImageController extends Controller
         return view('dashboard', compact('images', 'districts'));
     }
 
-    public function publicDashboard()
-    {
-        // District dropdown for guest page
-        $districts = District::where('status', 1)
-            ->orderBy('district_name')
+   public function publicDashboard()
+{
+    $districts = District::where('status', 1)
+        ->orderBy('district_name')
+        ->get();
+
+    if (Auth::check()) {
+
+        $images = Image::where('user_id', Auth::id())
+            ->whereNotNull('image_name')
+            ->with('district')
+            ->latest()
             ->get();
 
-        // Guest should not see user's uploaded images
-        $images = collect();
+    } else {
 
-        return view('dashboard', compact(
-            'images',
-            'districts'
-        ));
+        $images = collect();
     }
+
+    return view('dashboard', compact('images', 'districts'));
+}
 
     public function getImages(Request $request)
     {
@@ -510,57 +516,165 @@ class ImageController extends Controller
     }
 
     public function saveImage(Request $request)
-    {
-        $request->validate([
-            'file_path' => 'required',
-            'district_id' => 'required|exists:districts,id',
-        ]);
+{
+    $request->validate([
+        'file_path' => 'required|string',
+    ]);
 
-        $district = District::findOrFail($request->district_id);
-        $shortcode = strtoupper($district->district_shortcode);
-        $baseName = 'POTHYS_' . $shortcode . '_' . now()->format('dMy');
+    // -----------------------------------------
+    // 1. Get temporary generated image
+    // -----------------------------------------
 
-        // Find the next free suffix: _1, _2, _3...
-        $suffix = 0;
-        do {
-            $suffix++;
-            $cleanName = $baseName . '_' . $suffix;
-        } while (Image::where('image_name', $cleanName)->exists());
+    $oldPath = public_path(
+        'storage/' . $request->file_path
+    );
 
-        $path = public_path('storage/');
-        $oldPath = $path . $request->file_path;
-
-        $newFileName = $cleanName . '.jpg';
-        $newPath = $path . 'images/' . $newFileName;
-        rename($oldPath, $newPath);
-
-        // Generate shortcode
-        do {
-            $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $shortCode =
-                $letters[random_int(0, 25)] .
-                $letters[random_int(0, 25)] .
-                random_int(0, 9) .
-                $shortcode;
-        } while (
-            Image::where('short_code', $shortCode)->exists()
-        );
-
-        Image::create([
-            'user_id' => Auth::id(),
-            'district_id' => $district->id,
-            'image_name' => $cleanName,
-            'file_path' => 'images/' . $newFileName,
-            'short_code' => $shortCode
-        ]);
+    if (!file_exists($oldPath)) {
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Image saved successfully',
-            'image_name' => $cleanName,
-            'short_url' => url($shortCode)
-        ]);
+            'status' => 'error',
+            'message' => 'Generated image file not found.'
+        ], 404);
     }
+
+
+    // -----------------------------------------
+    // 2. Create unique image filename
+    // -----------------------------------------
+
+    $fileName =
+        'image_' .
+        now()->format('YmdHis') .
+        '_' .
+        random_int(1000, 9999) .
+        '.jpg';
+
+
+    $imageDirectory = public_path(
+        'storage/images'
+    );
+
+    if (!file_exists($imageDirectory)) {
+
+        mkdir(
+            $imageDirectory,
+            0777,
+            true
+        );
+    }
+
+
+    $newPath =
+        $imageDirectory . '/' . $fileName;
+
+
+    // -----------------------------------------
+    // 3. Move image
+    // -----------------------------------------
+
+    if (!rename($oldPath, $newPath)) {
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Unable to save image.'
+        ], 500);
+    }
+
+
+    // -----------------------------------------
+    // 4. Generate RANDOM 5 CHARACTER CODE
+    // -----------------------------------------
+
+    do {
+
+        $characters =
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZ' .
+            'abcdefghijklmnopqrstuvwxyz' .
+            '0123456789';
+
+        $shortCode = '';
+
+        for ($i = 0; $i < 5; $i++) {
+
+            $shortCode .= $characters[
+                random_int(
+                    0,
+                    strlen($characters) - 1
+                )
+            ];
+        }
+
+    } while (
+        Image::where(
+            'short_code',
+            $shortCode
+        )->exists()
+    );
+
+
+    // -----------------------------------------
+    // 5. Save database
+    // -----------------------------------------
+
+    $image = Image::create([
+
+        'user_id' => Auth::id(),
+
+        'image_name' => pathinfo(
+            $fileName,
+            PATHINFO_FILENAME
+        ),
+
+        'file_path' =>
+            'images/' . $fileName,
+
+        'short_code' =>
+            $shortCode,
+
+        'click_count' => 0,
+
+    ]);
+
+
+    // -----------------------------------------
+    // 6. Short URL
+    // -----------------------------------------
+
+    $shortUrl =
+        url('/' . $shortCode);
+
+
+    // -----------------------------------------
+    // 7. Response
+    // -----------------------------------------
+
+    return response()->json([
+
+        'status' => 'success',
+
+        'message' =>
+            'Short URL created successfully.',
+
+        'image_id' =>
+            $image->id,
+
+        'image_name' =>
+            $image->image_name,
+
+        'short_code' =>
+            $shortCode,
+
+        'short_url' =>
+            $shortUrl,
+
+        'image_url' =>
+            asset(
+                'storage/' .
+                $image->file_path
+            ),
+
+    ]);
+}
 
     public function todayViewers($imageId)
     {
@@ -682,77 +796,96 @@ class ImageController extends Controller
 
 
 
-    public function saveUrl(Request $request)
-    {
-        $request->validate([
-            'original_url' => 'required|url|max:2048',
-            'district_id' => 'required|exists:districts,id',
-        ]);
+   public function saveUrl(Request $request)
+{
+    $request->validate([
+        'original_url' => 'required|url|max:2048',
+    ]);
 
-        // Get selected district
-        $district = District::findOrFail($request->district_id);
+    /*
+    |--------------------------------------------------------------------------
+    | Generate 5 Character Short Code
+    |--------------------------------------------------------------------------
+    | Example: AB2CH
+    |--------------------------------------------------------------------------
+    */
 
-        // District shortcode
-        $shortcode = strtoupper($district->district_shortcode);
+    do {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Generate Short Code
-        |--------------------------------------------------------------------------
-        | Format: XX9XXX
-        | Example: AB2CHN
-        |--------------------------------------------------------------------------
-        */
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-        do {
-            $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $shortCode = '';
 
-            $shortCode =
-                $letters[random_int(0, 25)] .
-                $letters[random_int(0, 25)] .
-                random_int(0, 9) .
-                $shortcode;
+        for ($i = 0; $i < 5; $i++) {
 
-        } while (
-            Image::where('short_code', $shortCode)->exists()
-        );
+            $shortCode .= $characters[
+                random_int(0, strlen($characters) - 1)
+            ];
 
-        /*
-        |--------------------------------------------------------------------------
-        | Save URL in images table
-        |--------------------------------------------------------------------------
-        */
+        }
 
-        Image::create([
-            'user_id' => Auth::id(),
-            'district_id' => $district->id,
-            'image_name' => null,
-            'file_path' => null,
-            'original_url' => $request->original_url,
-            'short_code' => $shortCode,
-            'click_count' => 0,
-        ]);
+    } while (
+        Image::where('short_code', $shortCode)->exists()
+    );
 
-        return redirect()
-            ->route('url-shortener.index')
-            ->with('success', 'Short URL created successfully!');
-    }
 
-    public function urlShortener()
-    {
-        $districts = District::where('status', 1)
-            ->orderBy('district_name')
-            ->get();
+    /*
+    |--------------------------------------------------------------------------
+    | Save URL
+    |--------------------------------------------------------------------------
+    */
+
+    $image = Image::create([
+        'user_id'      => Auth::id(), // NULL for guest
+        'image_name'   => null,
+        'file_path'    => null,
+        'district_id'  => null,
+        'original_url' => $request->original_url,
+        'short_code'   => $shortCode,
+        'click_count'  => 0,
+    ]);
+
+
+    $shortUrl = url('/' . $shortCode);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Guest / Logged-in Response
+    |--------------------------------------------------------------------------
+    */
+
+    return redirect()
+        ->route('url-shortener.index')
+        ->with('success', 'Short URL created successfully!')
+        ->with('short_url', $shortUrl);
+}
+
+ public function urlShortener()
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Logged-in user's URLs only
+    |--------------------------------------------------------------------------
+    */
+
+    if (Auth::check()) {
 
         $urls = Image::where('user_id', Auth::id())
             ->whereNotNull('original_url')
-            ->with('district')
             ->latest()
             ->get();
 
-        return view(
-            'url-shortener.index',
-            compact('districts', 'urls')
-        );
+    } else {
+
+        $urls = collect();
+
     }
+
+
+    return view(
+        'url-shortener.index',
+        compact('urls')
+    );
+}
 }

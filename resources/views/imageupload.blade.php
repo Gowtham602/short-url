@@ -16,7 +16,7 @@
 
     <div class="container py-5">
 
-        <h3 class="text-center mb-4">Image Merger</h3>
+        <h3 class="text-center mb-4">Image Merger 09</h3>
 
         <div class="card">
 
@@ -24,7 +24,7 @@
                 @csrf
                 <!-- MODE SELECT -->
                 <div class="mb-3">
-                    <label>Merge Direction</label>
+                    <label>Merge Direction 09</label>
                     <select name="mode" class="form-select">
                         <option value="vertical">Vertical (Top → Bottom)</option>
                         <option value="horizontal">Horizontal (Left → Right)</option>

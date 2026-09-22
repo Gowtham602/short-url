@@ -4,21 +4,24 @@
         URL Shortener
     </x-slot>
 
+
     <div class="main-content">
 
         <div class="page-content">
 
             <div class="container-fluid">
 
-                {{-- Page Title --}}
+
+                {{-- =====================================================
+                    PAGE TITLE
+                ====================================================== --}}
+
                 <div class="row">
                     <div class="col-12">
 
-                        <div class="page-title-box d-sm-flex
-                                    align-items-center
-                                    justify-content-between">
+                        <div class="page-title-box">
 
-                            <h4 class="mb-sm-0">
+                            <h4 class="mb-0 p-0 p-lg-3">
                                 URL Shortener
                             </h4>
 
@@ -28,138 +31,89 @@
                 </div>
 
 
-                {{-- SUCCESS MESSAGE --}}
+                {{-- =====================================================
+                    SUCCESS MESSAGE
+                ====================================================== --}}
+
                 @if(session('success'))
 
-                    <div class="alert alert-success">
-                        {{ session('success') }}
-                    </div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: @json(session('success')),
+                                confirmButtonText: 'OK'
+                            });
+
+                        });
+                    </script>
 
                 @endif
 
 
-                {{-- VALIDATION ERROR --}}
+                {{-- =====================================================
+                    VALIDATION ERROR
+                ====================================================== --}}
+
                 @if($errors->any())
 
-                    <div class="alert alert-danger">
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
 
-                        <ul class="mb-0">
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: @json($errors->first()),
+                                confirmButtonText: 'OK'
+                            });
 
-                            @foreach($errors->all() as $error)
-
-                                <li>{{ $error }}</li>
-
-                            @endforeach
-
-                        </ul>
-
-                    </div>
+                        });
+                    </script>
 
                 @endif
 
 
-                {{-- CREATE SHORT URL --}}
-                <div class="row">
+                {{-- =====================================================
+                    GENERATED SHORT URL
+                ====================================================== --}}
 
-                    <div class="col-lg-12">
+                @if(session('short_url'))
 
-                        <div class="card">
+                    <div class="card mb-3">
 
-                            <div class="card-header">
+                        <div class="card-body">
 
-                                <h5 class="card-title mb-0">
-                                    Create Short URL
-                                </h5>
+                            <div class="row align-items-center g-2">
 
-                            </div>
+                                <div class="col-md-9">
 
+                                    <input
+                                        type="text"
+                                        id="generatedShortUrl"
+                                        class="form-control"
+                                        value="{{ session('short_url') }}"
+                                        readonly
+                                    >
 
-                            <div class="card-body">
+                                </div>
 
-                                <form
-                                    action="{{ route('url-shortener.store') }}"
-                                    method="POST"
-                                >
+                                <div class="col-md-3">
 
-                                    @csrf
+                                    <button
+                                        type="button"
+                                        class="btn btn-primary w-100"
+                                        onclick="copyGeneratedUrl()"
+                                    >
 
+                                        <i class="ri-file-copy-line me-1"></i>
 
-                                    <div class="row">
+                                        Copy URL
 
+                                    </button>
 
-                                        {{-- URL --}}
-                                        <div class="col-lg-6 mb-3">
-
-                                            <label class="form-label">
-                                                Enter URL
-                                            </label>
-
-                                            <input
-                                                type="url"
-                                                name="original_url"
-                                                class="form-control"
-                                                placeholder="https://example.com"
-                                                value="{{ old('original_url') }}"
-                                                required
-                                            >
-
-                                        </div>
-
-
-                                        {{-- DISTRICT --}}
-                                        <div class="col-lg-6 mb-3">
-
-                                            <label class="form-label">
-                                                District
-                                            </label>
-
-                                            <select
-                                                name="district_id"
-                                                class="form-select"
-                                                required
-                                            >
-
-                                                <option value="">
-                                                    Select District
-                                                </option>
-
-                                                @foreach($districts as $district)
-
-                                                    <option
-                                                        value="{{ $district->id }}"
-                                                        {{ old('district_id') == $district->id ? 'selected' : '' }}
-                                                    >
-
-                                                        {{ $district->district_name }}
-
-                                                    </option>
-
-                                                @endforeach
-
-                                            </select>
-
-                                        </div>
-
-
-                                    </div>
-
-
-                                    <div class="text-end">
-
-                                        <button
-                                            type="submit"
-                                            class="btn btn-primary"
-                                        >
-
-                                            <i class="ri-links-line me-1"></i>
-
-                                            Create Short URL
-
-                                        </button>
-
-                                    </div>
-
-                                </form>
+                                </div>
 
                             </div>
 
@@ -167,184 +121,309 @@
 
                     </div>
 
-                </div>
+                @endif
 
 
-                {{-- URL LIST --}}
-                {{-- URL LIST --}}
-<div class="row">
+                {{-- =====================================================
+                    CREATE SHORT URL
+                ====================================================== --}}
 
-    <div class="col-lg-12">
+                <div class="card mb-3">
 
-        <div class="card">
+                    <div class="card-header">
 
-            <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            Create Short URL
+                        </h5>
 
-                <h5 class="card-title mb-0">
-                    Short URLs
-                </h5>
-
-            </div>
-
-            <div class="card-body">
-
-                <div class="table-responsive">
-
-                    <table
-                        id="example"
-                        class="table table-bordered dt-responsive nowrap table-striped align-middle"
-                        style="width:100%"
-                    >
-
-                        <thead>
-
-                            <tr>
-
-                                <th>#</th>
-
-                                <th>Original URL</th>
-
-                                <th>District</th>
-
-                                <th>Short URL</th>
-
-                                <th>Total Clicks</th>
-
-                                <th>Date</th>
-
-                            </tr>
-
-                        </thead>
+                    </div>
 
 
-                        <tbody>
+                    <div class="card-body">
 
-                            @forelse($urls as $url)
+                        <form
+                            action="{{ route('url-shortener.store') }}"
+                            method="POST"
+                        >
 
-                                <tr>
-
-                                    {{-- # --}}
-                                    <td>
-                                        {{ $loop->iteration }}
-                                    </td>
+                            @csrf
 
 
-                                    {{-- Original URL --}}
-                                    <td>
+                            <div class="row align-items-end">
 
-                                        <a
-                                            href="{{ $url->original_url }}"
-                                            target="_blank"
-                                            class="text-primary text-decoration-none"
-                                        >
+                                <div class="col-lg-8 col-md-8 mb-3 mb-md-0">
 
-                                            {{ \Illuminate\Support\Str::limit($url->original_url, 50) }}
+                                    <label class="form-label">
+                                        Enter URL
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                        </a>
-
-                                    </td>
-
-
-                                    {{-- District --}}
-                                    <td>
-
-                                        {{ $url->district->district_name ?? '-' }}
-
-                                    </td>
-
-
-                                    {{-- Short URL --}}
-                                    <td>
-
-                                        <div class="d-flex align-items-center gap-2">
-
-                                            <a
-                                                href="{{ url('/'.$url->short_code) }}"
-                                                target="_blank"
-                                                class="text-primary small text-truncate"
-                                                style="max-width:220px;"
-                                            >
-
-                                                {{ url('/'.$url->short_code) }}
-
-                                            </a>
-
-
-                                            {{-- Copy --}}
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-light border"
-                                                onclick="copyLink(this, '{{ url('/'.$url->short_code) }}')"
-                                            >
-
-                                                <i class="ri-file-copy-line"></i>
-
-                                            </button>
-
-                                        </div>
-
-                                    </td>
-
-
-                                    {{-- Clicks --}}
-                                    <td>
-
-                                        {{ $url->click_count }}
-
-                                    </td>
-
-
-                                    {{-- Date --}}
-                                    <td class="text-muted small">
-
-                                        {{ $url->created_at->format('d M Y') }}<br>
-
-                                        {{ $url->created_at->format('h:i A') }}
-
-                                    </td>
-
-                                </tr>
-
-
-                            @empty
-
-                                <tr>
-
-                                    <td
-                                        colspan="6"
-                                        class="text-center text-muted"
+                                    <input
+                                        type="url"
+                                        name="original_url"
+                                        class="form-control"
+                                        placeholder="https://example.com"
+                                        value="{{ old('original_url') }}"
+                                        required
                                     >
 
-                                        No short URLs found.
+                                </div>
 
-                                    </td>
 
-                                </tr>
+                                <div class="col-lg-4 col-md-4">
 
-                            @endforelse
+                                    <button
+                                        type="submit"
+                                        class="btn btn-primary w-100"
+                                    >
 
-                        </tbody>
+                                        <i class="ri-links-line me-1"></i>
 
-                    </table>
+                                        Create Short URL
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </form>
+
+                    </div>
 
                 </div>
 
+
+                {{-- =====================================================
+                    LOGGED-IN USER TABLE
+                ====================================================== --}}
+
+                @auth
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <h5 class="card-title mb-0">
+                                Short URLs
+                            </h5>
+
+                        </div>
+
+
+                        <div class="card-body">
+
+                            <div class="table-responsive">
+
+                                <table
+                                    id="example"
+                                    class="table table-bordered table-striped align-middle"
+                                    style="width:100%"
+                                >
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>#</th>
+
+                                            <th>Original URL</th>
+
+                                            <th>Short URL</th>
+
+                                            <th>Total Clicks</th>
+
+                                            <th>Date</th>
+
+                                        </tr>
+
+                                    </thead>
+
+
+                                    <tbody>
+
+                                        @forelse($urls as $url)
+
+                                            <tr>
+
+                                                {{-- Number --}}
+
+                                                <td>
+                                                    {{ $loop->iteration }}
+                                                </td>
+
+
+                                                {{-- Original URL --}}
+
+                                                <td>
+
+                                                    <a
+                                                        href="{{ $url->original_url }}"
+                                                        target="_blank"
+                                                        class="text-primary text-decoration-none"
+                                                    >
+
+                                                        {{ \Illuminate\Support\Str::limit($url->original_url, 50) }}
+
+                                                    </a>
+
+                                                </td>
+
+
+                                                {{-- Short URL --}}
+
+                                                <td>
+
+                                                    <div class="d-flex align-items-center gap-2">
+
+                                                        <a
+                                                            href="{{ url('/' . $url->short_code) }}"
+                                                            target="_blank"
+                                                            class="text-primary"
+                                                        >
+
+                                                            {{ url('/' . $url->short_code) }}
+
+                                                        </a>
+
+
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm btn-light border"
+                                                            onclick="copyLink(
+                                                                this,
+                                                                '{{ url('/' . $url->short_code) }}'
+                                                            )"
+                                                            title="Copy"
+                                                        >
+
+                                                            <i class="ri-file-copy-line"></i>
+
+                                                        </button>
+
+                                                    </div>
+
+                                                </td>
+
+
+                                                {{-- Click Count --}}
+
+                                                <td>
+                                                    {{ $url->click_count ?? 0 }}
+                                                </td>
+
+
+                                                {{-- Date --}}
+
+                                                <td>
+
+                                                    {{ $url->created_at->format('d M Y') }}
+
+                                                    <br>
+
+                                                    <small class="text-muted">
+                                                        {{ $url->created_at->format('h:i A') }}
+                                                    </small>
+
+                                                </td>
+
+                                            </tr>
+
+                                        @empty
+
+                                            <tr>
+
+                                                <td
+                                                    colspan="5"
+                                                    class="text-center text-muted py-4"
+                                                >
+
+                                                    No short URLs found.
+
+                                                </td>
+
+                                            </tr>
+
+                                        @endforelse
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                @endauth
+
+
             </div>
 
         </div>
 
     </div>
 
-</div>
 
-            </div>
+    {{-- ================================================================
+        SWEETALERT2
+    ================================================================= --}}
 
-        </div>
-
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
     <script>
+
+        /*
+        |--------------------------------------------------------------------------
+        | Copy Generated Short URL
+        |--------------------------------------------------------------------------
+        */
+
+        function copyGeneratedUrl()
+        {
+            const input = document.getElementById('generatedShortUrl');
+
+            if (!input) {
+                return;
+            }
+
+            navigator.clipboard
+                .writeText(input.value)
+                .then(function () {
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copied!',
+                        text: 'Short URL copied successfully.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                })
+                .catch(function () {
+
+                    input.select();
+                    document.execCommand('copy');
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copied!',
+                        text: 'Short URL copied successfully.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                });
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Copy URL From Table
+        |--------------------------------------------------------------------------
+        */
 
         function copyLink(button, url)
         {
@@ -352,19 +431,68 @@
                 .writeText(url)
                 .then(function () {
 
-                    button.innerHTML =
-                        '<i class="ri-check-line text-success"></i>';
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copied!',
+                        text: 'Short URL copied successfully.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
 
-                    setTimeout(function () {
+                })
+                .catch(function () {
 
-                        button.innerHTML =
-                            '<i class="ri-file-copy-line"></i>';
-
-                    }, 2000);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Copy Failed',
+                        text: 'Unable to copy the URL.',
+                        confirmButtonText: 'OK'
+                    });
 
                 });
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | DataTable
+        |--------------------------------------------------------------------------
+        */
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            if (
+                document.querySelector('#example') &&
+                typeof $ !== 'undefined' &&
+                $.fn.DataTable
+            ) {
+
+                $('#example').DataTable({
+
+                    responsive: true,
+
+                    pageLength: 10,
+
+                    order: [
+                        [4, 'desc']
+                    ],
+
+                    columnDefs: [
+
+                        {
+                            orderable: false,
+                            targets: [1, 2]
+                        }
+
+                    ]
+
+                });
+
+            }
+
+        });
+
     </script>
+
 
 </x-app-layout>

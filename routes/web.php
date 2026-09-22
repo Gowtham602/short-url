@@ -401,10 +401,6 @@ require __DIR__ . '/auth.php';
 |--------------------------------------------------------------------------
 |
 */
-
-Route::get(
-    '/{code}',
-    [ImageController::class, 'redirect']
-)
-    ->where('code', '[A-Z]{2}[0-9]{1}[A-Z]{3}')
+Route::get('/{code}', [ImageController::class, 'redirect'])
+    ->where('code', '[A-Za-z0-9]{5}')
     ->name('short.url');

@@ -30,7 +30,7 @@
                             class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
 
                            <h4 class="mb-sm-0 p-0 p-md-3">
-                                    Image Merger
+                                    Image Merger 07
                                 </h4>
 
                             <div class="page-title-right">
@@ -44,7 +44,7 @@
                                     </li>
 
                                     <li class="breadcrumb-item active">
-                                        Image Merger
+                                        Image Merger 07
                                     </li>
 
                                 </ol>
@@ -101,7 +101,7 @@
                                 <div class="card-header">
 
                                     <h4 class="card-title mb-0">
-                                        Image Merger
+                                        Image Merger 07
                                     </h4>
 
                                 </div>
@@ -121,7 +121,7 @@
                                         <div class="col-lg-6">
 
                                             <label class="form-label">
-                                                Merge Direction
+                                                Merge Direction o7
                                             </label>
 
                                             <select name="mode" class="form-select" required>
@@ -142,7 +142,7 @@
 
                                         {{-- DISTRICT --}}
 
-                                        <div class="col-lg-6">
+                                        <!-- <div class="col-lg-6">
 
                                             <label class="form-label">
                                                 District
@@ -167,7 +167,7 @@
 
                                             </select>
 
-                                        </div>
+                                        </div> -->
 
                                     </div>
 
@@ -350,9 +350,9 @@
                                                         Image
                                                     </th>
 
-                                                    <th>
+                                                    <!-- <th>
                                                         Action
-                                                    </th>
+                                                    </th> -->
 
                                                     <th>
                                                         Short URL
@@ -399,7 +399,7 @@
 
                                                         </td>
 
-
+<!-- 
                                                         <td>
 
                                                             @if(Route::has('image.edit'))
@@ -434,7 +434,7 @@
 
                                                             @endif
 
-                                                        </td>
+                                                        </td> -->
 
 
                                                         <td>
@@ -700,7 +700,7 @@
 
                     <i class="ri-links-line me-1"></i>
 
-                    Create Short URL
+                    Create Short URL 09
 
                 </button>
 
@@ -985,46 +985,46 @@
             |--------------------------------------------------------------------------
             */
 
-            function computePreviewName() {
+            // function computePreviewName() {
 
-                const district =
-                    document.querySelector(
-                        '#district_id'
-                    );
-
-
-                if (!district) {
-
-                    return '—';
-
-                }
+                // const district =
+                //     document.querySelector(
+                //         '#district_id'
+                //     );
 
 
-                const option =
-                    district.options[
-                    district.selectedIndex
-                    ];
+                // if (!district) {
+
+                //     return '—';
+
+                // }
 
 
-                if (
-                    !option ||
-                    !option.dataset.shortcode
-                ) {
-
-                    return '—';
-
-                }
+                // const option =
+                //     district.options[
+                //     district.selectedIndex
+                //     ];
 
 
-                return (
-                    'POTHYS_' +
-                    option.dataset.shortcode.toUpperCase() +
-                    '_' +
-                    todayCode() +
-                    '_1'
-                );
+                // if (
+                //     !option ||
+                //     !option.dataset.shortcode
+                // ) {
 
-            }
+                //     return '—';
+
+                // }
+
+
+            //     return (
+            //         'POTHYS_' +
+            //         option.dataset.shortcode.toUpperCase() +
+            //         '_' +
+            //         todayCode() +
+            //         '_1'
+            //     );
+
+            // }
 
             /*
             |--------------------------------------------------------------------------
@@ -1094,8 +1094,8 @@
                 // 7. RESET DISTRICT
                 // ==========================================
 
-                document.querySelector('#district_id')
-                    .value = '';
+                // document.querySelector('#district_id')
+                //     .value = '';
 
 
                 // ==========================================
@@ -1135,279 +1135,166 @@
             */
 
             mergeForm.addEventListener(
-                'submit',
-                async function (event) {
+    'submit',
+    async function (event) {
 
-                    event.preventDefault();
+        event.preventDefault();
 
+        if (myDropzone.files.length === 0) {
 
-                    if (
-                        myDropzone.files.length === 0
-                    ) {
+            alert('Please add at least one image.');
 
-                        alert(
-                            'Please add at least one image.'
-                        );
+            return;
+        }
 
-                        return;
+        loader.style.display = 'flex';
 
-                    }
+        generateBtn.disabled = true;
 
+        generateBtn.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
 
-                    const districtId =
-                        document.querySelector(
-                            '#district_id'
-                        ).value;
+        const formData = new FormData();
 
+        formData.append(
+            '_token',
+            document.querySelector(
+                'input[name="_token"]'
+            ).value
+        );
 
-                    if (!districtId) {
+        formData.append(
+            'mode',
+            document.querySelector(
+                'select[name="mode"]'
+            ).value
+        );
 
-                        alert(
-                            'Please select a district.'
-                        );
+        myDropzone.files.forEach(function (file) {
 
-                        return;
+            formData.append(
+                'images[]',
+                file
+            );
 
-                    }
+        });
 
+        try {
 
+            const response = await fetch(
+                window.routes.processImage,
+                {
+                    method: 'POST',
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | LOADING
-                    |--------------------------------------------------------------------------
-                    */
+                    headers: {
+                        'Accept': 'application/json'
+                    },
 
-                    loader.style.display =
-                        'flex';
-
-
-                    generateBtn.disabled =
-                        true;
-
-
-                    generateBtn.innerHTML =
-                        '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
-
-
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | FORM DATA
-                    |--------------------------------------------------------------------------
-                    */
-
-                    const formData =
-                        new FormData();
-
-
-                    formData.append(
-                        '_token',
-                        document.querySelector(
-                            'input[name="_token"]'
-                        ).value
-                    );
-
-
-                    formData.append(
-                        'mode',
-                        document.querySelector(
-                            'select[name="mode"]'
-                        ).value
-                    );
-
-
-                    formData.append(
-                        'district_id',
-                        districtId
-                    );
-
-
-                    myDropzone.files.forEach(
-                        function (file) {
-
-                            formData.append(
-                                'images[]',
-                                file
-                            );
-
-                        }
-                    );
-
-
-
-                    try {
-
-
-                        const response =
-                            await fetch(
-                                window.routes.processImage,
-                                {
-
-                                    method: 'POST',
-
-                                    headers: {
-
-                                        'Accept':
-                                            'application/json'
-
-                                    },
-
-                                    body: formData
-
-                                }
-                            );
-
-
-
-                        const text =
-                            await response.text();
-
-
-                        let data;
-
-
-                        try {
-
-                            data =
-                                JSON.parse(text);
-
-                        }
-                        catch (error) {
-
-                            console.error(text);
-
-                            throw new Error(
-                                'Invalid server response'
-                            );
-
-                        }
-
-
-
-                        if (!response.ok) {
-
-                            throw new Error(
-                                data.message ||
-                                'Image processing failed.'
-                            );
-
-                        }
-
-
-
-                        if (data.image) {
-
-
-                            const modalImage =
-                                document.querySelector(
-                                    '#modalImage'
-                                );
-
-
-                            modalImage.src = data.image_url || data.image;
-
-
-                            modalImage.dataset.filePath =
-                                data.file_path;
-
-
-                            document.querySelector(
-                                '#previewName'
-                            ).textContent =
-                                computePreviewName();
-
-
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | RESET SHORT URL
-                            |--------------------------------------------------------------------------
-                            */
-
-                            document.querySelector(
-                                '#shortUrlBox'
-                            ).style.display =
-                                'none';
-
-
-                            document.querySelector(
-                                '#shortUrlInput'
-                            ).value =
-                                '';
-
-
-                            document.querySelector(
-                                '#img_error'
-                            ).textContent =
-                                '';
-
-
-                            saveBtn.disabled =
-                                false;
-
-
-                            saveBtn.innerHTML =
-                                '<i class="ri-links-line me-1"></i> Create Short URL';
-
-
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | SHOW MODAL
-                            |--------------------------------------------------------------------------
-                            */
-
-                            const offcanvas =
-                                bootstrap.Offcanvas.getOrCreateInstance(
-                                    resultModal
-                                );
-
-
-                            offcanvas.show();
-
-                        }
-                        else {
-
-                            throw new Error(
-                                data.message ||
-                                'Image processing failed.'
-                            );
-
-                        }
-
-                    }
-                    catch (error) {
-
-                        console.error(
-                            'Generate Error:',
-                            error
-                        );
-
-
-                        alert(
-                            error.message ||
-                            'Something went wrong.'
-                        );
-
-                    }
-                    finally {
-
-                        loader.style.display =
-                            'none';
-
-
-                        generateBtn.disabled =
-                            false;
-
-
-                        generateBtn.innerHTML =
-                            'Generate Image';
-
-                    }
-
+                    body: formData
                 }
             );
+
+            const text = await response.text();
+
+            let data;
+
+            try {
+
+                data = JSON.parse(text);
+
+            } catch (error) {
+
+                console.error(text);
+
+                throw new Error(
+                    'Invalid server response'
+                );
+            }
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    'Image processing failed.'
+                );
+            }
+
+            if (data.image) {
+
+                const modalImage =
+                    document.querySelector(
+                        '#modalImage'
+                    );
+
+                modalImage.src =
+                    data.image_url || data.image;
+
+                modalImage.dataset.filePath =
+                    data.file_path;
+
+                // Since district is removed,
+                // don't call computePreviewName()
+                document.querySelector(
+                    '#previewName'
+                ).textContent =
+                    'Merged Image';
+
+                document.querySelector(
+                    '#shortUrlBox'
+                ).style.display = 'none';
+
+                document.querySelector(
+                    '#shortUrlInput'
+                ).value = '';
+
+                document.querySelector(
+                    '#img_error'
+                ).textContent = '';
+
+                saveBtn.disabled = false;
+
+                saveBtn.innerHTML =
+                    '<i class="ri-links-line me-1"></i> Create Short URL';
+
+                const offcanvas =
+                    bootstrap.Offcanvas.getOrCreateInstance(
+                        resultModal
+                    );
+
+                offcanvas.show();
+
+            } else {
+
+                throw new Error(
+                    data.message ||
+                    'Image processing failed.'
+                );
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Generate Error:',
+                error
+            );
+
+            alert(
+                error.message ||
+                'Something went wrong.'
+            );
+
+        } finally {
+
+            loader.style.display = 'none';
+
+            generateBtn.disabled = false;
+
+            generateBtn.innerHTML =
+                'Generate Image';
+        }
+
+    }
+);
 
 
 
@@ -1481,248 +1368,202 @@
             |--------------------------------------------------------------------------
             */
             saveBtn.addEventListener(
-                'click',
-                async function () {
+    'click',
+    async function () {
 
-                    const button = this;
+        const button = this;
 
-                    const errorBox = document.querySelector('#img_error');
+        const errorBox =
+            document.querySelector('#img_error');
 
-                    errorBox.textContent = '';
+        errorBox.textContent = '';
 
-                    const modalImage =
-                        document.querySelector('#modalImage');
+        const modalImage =
+            document.querySelector('#modalImage');
 
-                    const filePath =
-                        modalImage.dataset.filePath;
+        const filePath =
+            modalImage.dataset.filePath;
 
-                    const districtId =
-                        document.querySelector('#district_id').value;
+        // =========================================
+        // VALIDATION
+        // =========================================
 
-                    const imageName =
-                        document.querySelector('#previewName')
-                            .textContent
-                            .trim();
+        if (!filePath) {
 
+            errorBox.textContent =
+                'Generated image file path is missing.';
 
-                    // =====================================================
-                    // VALIDATION
-                    // =====================================================
+            return;
+        }
 
-                    if (!filePath) {
+        // =========================================
+        // BUTTON LOADING
+        // =========================================
 
-                        errorBox.textContent =
-                            'Generated image file path is missing.';
+        button.disabled = true;
 
-                        return;
-                    }
+        button.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1"></span> Creating...';
 
-                    if (!districtId) {
+        try {
 
-                        errorBox.textContent =
-                            'Please select a district.';
+            const response = await fetch(
+                window.routes.saveImage,
+                {
+                    method: 'POST',
 
-                        return;
-                    }
+                    headers: {
 
-                    if (!imageName || imageName === '—') {
+                        'Content-Type':
+                            'application/json',
 
-                        errorBox.textContent =
-                            'Image name is missing.';
+                        'X-CSRF-TOKEN':
+                            document.querySelector(
+                                'input[name="_token"]'
+                            ).value,
 
-                        return;
-                    }
+                        'Accept':
+                            'application/json'
+                    },
 
+                    body: JSON.stringify({
 
-                    // =====================================================
-                    // BUTTON LOADING
-                    // =====================================================
+                        file_path: filePath
 
-                    button.disabled = true;
-
-                    button.innerHTML =
-                        '<span class="spinner-border spinner-border-sm me-1"></span> Creating...';
-
-
-                    try {
-
-                        // =================================================
-                        // CREATE SHORT URL
-                        // =================================================
-
-                        const response = await fetch(
-                            window.routes.saveImage,
-                            {
-                                method: 'POST',
-
-                                headers: {
-                                    'Content-Type': 'application/json',
-
-                                    'X-CSRF-TOKEN':
-                                        document.querySelector(
-                                            'input[name="_token"]'
-                                        ).value,
-
-                                    'Accept': 'application/json'
-                                },
-
-                                body: JSON.stringify({
-
-                                    image_name: imageName,
-
-                                    file_path: filePath,
-
-                                    district_id: districtId
-
-                                })
-                            }
-                        );
-
-
-                        // =================================================
-                        // RESPONSE
-                        // =================================================
-
-                        const data =
-                            await response.json();
-
-                        console.log(
-                            'Save Image Response:',
-                            data
-                        );
-
-
-                        // =================================================
-                        // ERROR
-                        // =================================================
-
-                        if (!response.ok) {
-
-                            errorBox.textContent =
-                                data.message ||
-                                'Unable to create short URL.';
-
-                            button.disabled = false;
-
-                            button.innerHTML =
-                                '<i class="ri-links-line me-1"></i> Create Short URL';
-
-                            return;
-                        }
-
-
-                        // =================================================
-                        // SUCCESS
-                        // =================================================
-
-                        if (data.status === 'success') {
-
-                            // =====================================================
-                            // 1. SHOW SHORT URL
-                            // =====================================================
-
-                            document.querySelector('#shortUrlInput')
-                                .value = data.short_url;
-
-
-                            document.querySelector('#openShortUrl')
-                                .href = data.short_url;
-
-
-                            document.querySelector('#shortUrlBox')
-                                .style.display = 'block';
-
-
-                            // =====================================================
-                            // 2. UPDATE FINAL IMAGE
-                            // =====================================================
-
-                            if (data.image_url) {
-
-                                modalImage.src =
-                                    data.image_url;
-                            }
-
-
-                            // =====================================================
-                            // 3. CHANGE BUTTON
-                            // =====================================================
-
-                            button.disabled = true;
-
-                            button.innerHTML =
-                                '<i class="ri-check-line me-1"></i> URL Created';
-
-
-                            // =====================================================
-                            // 4. SUCCESS MESSAGE
-                            // =====================================================
-
-                            if (typeof toastr !== 'undefined') {
-
-                                toastr.success(
-                                    data.message ||
-                                    'Short URL created successfully.'
-                                );
-                            }
-
-
-                            // =====================================================
-                            // 5. WAIT 2 SECONDS
-                            // THEN CLEAR OLD UPLOADS
-                            // =====================================================
-
-                            setTimeout(function () {
-
-                                console.log(
-                                    'Short URL created:',
-                                    data.short_url
-                                );
-
-
-                                const offcanvas =
-                                    bootstrap.Offcanvas.getInstance(
-                                        resultModal
-                                    );
-
-                                if (offcanvas) {
-
-                                    offcanvas.hide();
-                                }
-                                resetForNextImage();
-
-                            }, 7000);
-
-                        } else {
-
-                            errorBox.textContent =
-                                data.message ||
-                                'Unable to create short URL.';
-
-                            button.disabled = false;
-
-                            button.innerHTML =
-                                '<i class="ri-links-line me-1"></i> Create Short URL';
-                        }
-
-                    } catch (error) {
-
-                        console.error(
-                            'Save Image Error:',
-                            error
-                        );
-
-                        errorBox.textContent =
-                            'Something went wrong. Please try again.';
-
-                        button.disabled = false;
-
-                        button.innerHTML =
-                            '<i class="ri-links-line me-1"></i> Create Short URL';
-                    }
-
+                    })
                 }
             );
+
+            const data =
+                await response.json();
+
+            console.log(
+                'Save Image Response:',
+                data
+            );
+
+            if (!response.ok) {
+
+                errorBox.textContent =
+                    data.message ||
+                    'Unable to create short URL.';
+
+                button.disabled = false;
+
+                button.innerHTML =
+                    '<i class="ri-links-line me-1"></i> Create Short URL';
+
+                return;
+            }
+
+            if (data.status === 'success') {
+
+                // =========================================
+                // SHOW SHORT URL
+                // =========================================
+
+                document.querySelector(
+                    '#shortUrlInput'
+                ).value =
+                    data.short_url;
+
+                document.querySelector(
+                    '#openShortUrl'
+                ).href =
+                    data.short_url;
+
+                document.querySelector(
+                    '#shortUrlBox'
+                ).style.display =
+                    'block';
+
+
+                // =========================================
+                // UPDATE IMAGE
+                // =========================================
+
+                if (data.image_url) {
+
+                    modalImage.src =
+                        data.image_url;
+                }
+
+
+                // =========================================
+                // BUTTON
+                // =========================================
+
+                button.disabled = true;
+
+                button.innerHTML =
+                    '<i class="ri-check-line me-1"></i> URL Created';
+
+
+                // =========================================
+                // SUCCESS
+                // =========================================
+
+                if (
+                    typeof toastr !== 'undefined'
+                ) {
+
+                    toastr.success(
+                        data.message ||
+                        'Short URL created successfully.'
+                    );
+
+                }
+
+
+                // =========================================
+                // RESET
+                // =========================================
+
+                setTimeout(function () {
+
+                    const offcanvas =
+                        bootstrap.Offcanvas.getInstance(
+                            resultModal
+                        );
+
+                    if (offcanvas) {
+                        offcanvas.hide();
+                    }
+
+                    resetForNextImage();
+
+                }, 7000);
+
+            } else {
+
+                errorBox.textContent =
+                    data.message ||
+                    'Unable to create short URL.';
+
+                button.disabled = false;
+
+                button.innerHTML =
+                    '<i class="ri-links-line me-1"></i> Create Short URL';
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Save Image Error:',
+                error
+            );
+
+            errorBox.textContent =
+                'Something went wrong. Please try again.';
+
+            button.disabled = false;
+
+            button.innerHTML =
+                '<i class="ri-links-line me-1"></i> Create Short URL';
+        }
+
+    }
+);
 
             document
                 .querySelector('#copyShortUrl')
@@ -1829,6 +1670,27 @@
                 );
 
         }
+        // ============================================================
+// DATATABLE
+// ============================================================
+
+if (document.querySelector('#example')) {
+
+    $('#example').DataTable({
+        responsive: true,
+        pageLength: 10,
+        order: [
+            [6, 'desc']
+        ],
+        columnDefs: [
+            {
+                orderable: false,
+                targets: [1, 2, 3, 5]
+            }
+        ]
+    });
+
+}
 
     </script>
 
