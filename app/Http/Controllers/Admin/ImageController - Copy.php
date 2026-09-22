@@ -500,70 +500,230 @@ public function destroy($id)
 }
 
     public function saveImage(Request $request)
-    {
+{
+    $request->validate([
+        'image_name'  => 'required|string|max:255',
+        'file_path'   => 'required|string',
+        'district_id' => 'required|exists:districts,id',
+    ]);
 
-        // dd($request->all());
-        $request->validate([
-            'image_name' => 'required',
-            'file_path' => 'required',
-            'district_id' => 'required|exists:districts,id'
-        ]);
+    /*
+    |--------------------------------------------------------------------------
+    | User
+    |--------------------------------------------------------------------------
+    */
 
-        $cleanName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $request->image_name);
-
-        // check duplicate image name
-        $exists = Image::where('user_id', Auth::id())
-            ->where('image_name', $cleanName)
-            ->exists();
-
-        if ($exists) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Image name already exists'
-            ], 422);
-        }
-
-        $district = District::findOrFail($request->district_id);
-
-        $path = public_path('storage/');
-
-        $oldPath = $path . $request->file_path;
-
-        $newFileName = $cleanName . '.jpg';
-
-        $newPath = $path . 'images/' . $newFileName;
-
-        rename($oldPath, $newPath);
-
-        // Generate shortcode
-        do {
-
-            $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-            $shortCode =
-                $letters[random_int(0, 25)] .
-                $letters[random_int(0, 25)] .
-                random_int(0, 9) .
-                strtoupper($district->district_shortcode);
-
-        } while (
+    $userId = Auth::id();
 
 
-            Image::where('short_code', $shortCode)->exists()
+    /*
+    |--------------------------------------------------------------------------
+    | Clean Image Name
+    |--------------------------------------------------------------------------
+    */
+
+    $cleanName = preg_replace(
+        '/[^A-Za-z0-9_\-]/',
+        '_',
+        trim($request->image_name)
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | District
+    |--------------------------------------------------------------------------
+    */
+
+    $district = District::findOrFail(
+        $request->district_id
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check Duplicate
+    |--------------------------------------------------------------------------
+    */
+
+    $query = Image::where(
+        'image_name',
+        $cleanName
+    );
+
+    // Only check user's images when logged in
+    if ($userId) {
+
+        $query->where(
+            'user_id',
+            $userId
         );
-        // dd($shortCode, "shortcode");
-        Image::create([
-            'user_id' => Auth::id(),
-            'district_id' => $district->id,
-            'image_name' => $cleanName,
-            'file_path' => 'images/' . $newFileName,
-            'short_code' => $shortCode
-        ]);
+
+    }
+
+
+    if ($query->exists()) {
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Image saved successfully',
-            'short_url' => url($shortCode)
-        ]);
+            'status' => 'error',
+            'message' => 'Image name already exists.'
+        ], 422);
+
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Old File
+    |--------------------------------------------------------------------------
+    */
+
+    $storagePath = public_path('storage');
+
+    $oldPath = $storagePath . '/' .
+        ltrim($request->file_path, '/');
+
+
+    if (!file_exists($oldPath)) {
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Generated image file not found.'
+        ], 404);
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Images Folder
+    |--------------------------------------------------------------------------
+    */
+
+    $imageFolder = $storagePath . '/images';
+
+    if (!file_exists($imageFolder)) {
+
+        mkdir(
+            $imageFolder,
+            0777,
+            true
+        );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate Short Code
+    |--------------------------------------------------------------------------
+    */
+
+    do {
+
+        $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        $shortCode =
+            $letters[random_int(0, 25)] .
+            $letters[random_int(0, 25)] .
+            random_int(0, 9) .
+            strtoupper(
+                $district->district_shortcode
+            );
+
+    } while (
+        Image::where(
+            'short_code',
+            $shortCode
+        )->exists()
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | File Name
+    |--------------------------------------------------------------------------
+    */
+
+    $newFileName =
+        $cleanName .
+        '_' .
+        $shortCode .
+        '.jpg';
+
+
+    $newPath =
+        $imageFolder .
+        '/' .
+        $newFileName;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Move File
+    |--------------------------------------------------------------------------
+    */
+
+    if (!rename($oldPath, $newPath)) {
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Unable to save image.'
+        ], 500);
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save Database
+    |--------------------------------------------------------------------------
+    */
+
+    $image = Image::create([
+
+        // NULL for guest
+        'user_id' => $userId,
+
+        'district_id' => $district->id,
+
+        'image_name' => $cleanName,
+
+        'file_path' => 'images/' . $newFileName,
+
+        'short_code' => $shortCode,
+
+        'click_count' => 0,
+
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Response 
+    |--------------------------------------------------------------------------
+    */
+
+    return response()->json([
+
+        'status' => 'success',
+
+        'message' => $userId
+            ? 'Image saved successfully.'
+            : 'Image uploaded and short URL created successfully.',
+
+        'image_id' => $image->id,
+
+        'short_code' => $shortCode,
+
+        'short_url' => url($shortCode),
+
+        'image_url' => asset(
+            'storage/images/' . $newFileName
+        ),
+
+        'guest' => !$userId,
+
+    ]);
+}
 }
