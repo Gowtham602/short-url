@@ -150,7 +150,7 @@
                     <ul class="navbar-nav mx-auto mb-2 mb-md-0">
 
                         {{-- ADMIN / SUPER ADMIN --}}
-                        @if(in_array($role, ['admin', 'super-admin']))
+                        @if(in_array($role, ['admin', 'super-admin','user']))
 
                             <li class="nav-item">
 
@@ -203,7 +203,7 @@
                             </li> -->
 
 
-                            <li class="nav-item">
+                            <!-- <li class="nav-item">
 
                                 <a
                                     href="{{ route('sms.index') }}"
@@ -217,7 +217,7 @@
 
                                 </a>
 
-                            </li>
+                            </li> -->
 
                         @endif
 
