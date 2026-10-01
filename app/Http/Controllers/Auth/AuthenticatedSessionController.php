@@ -27,41 +27,60 @@ class AuthenticatedSessionController extends Controller
         // Authenticate user
         $request->authenticate();
 
-        // Regenerate session after successful login
+        // Regenerate session
         $request->session()->regenerate();
 
         // Get logged-in user
         $user = Auth::user();
 
-        // Make sure role exists
+        // Check user and role
         if (!$user || !$user->role) {
+
             Auth::logout();
 
             return redirect()
                 ->route('login')
                 ->withErrors([
-                    'email' => 'User role is not configured.',
+                    'email' => 'Your account does not have a valid role.',
                 ]);
         }
 
-        $role = strtolower($user->role->name);
+        // Get role name
+        $role = strtolower(trim($user->role->name));
 
-        // Admin / Super Admin
-        if (in_array($role, ['admin', 'super-admin'])) {
+        /*
+        |--------------------------------------------------------------------------
+        | Admin
+        |--------------------------------------------------------------------------
+        */
+        if ($role === 'admin') {
             return redirect()->route('dashboard');
         }
 
-        // Staff
-        if ($role === 'staff') {
-            return redirect()->route('sms.index');
+        /*
+        |--------------------------------------------------------------------------
+        | Super Admin
+        |--------------------------------------------------------------------------
+        */
+        if ($role === 'super-admin') {
+            return redirect()->route('dashboard');
         }
 
-        // Auditor
-        if ($role === 'auditor') {
-            return redirect()->route('sms.report');
+        /*
+        |--------------------------------------------------------------------------
+        | Normal User
+        |--------------------------------------------------------------------------
+        */
+        if ($role === 'user') {
+            return redirect()->route('home');
         }
 
-        // Unknown role
+        /*
+        |--------------------------------------------------------------------------
+        | Unknown Role
+        |--------------------------------------------------------------------------
+        */
+
         Auth::logout();
 
         return redirect()
