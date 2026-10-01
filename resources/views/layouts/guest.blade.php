@@ -765,7 +765,7 @@
              BRAND
         ================================================== -->
 
-        <div class="auth-brand">
+        <!-- <div class="auth-brand">
 
             <a
                 href="{{ route('home') }}"
@@ -782,11 +782,11 @@
 
             <p class="auth-brand-title">
 
-                Short Image URL
+                Short Image URL 1
 
             </p>
 
-        </div>
+        </div> -->
 
 
         <!-- =================================================
